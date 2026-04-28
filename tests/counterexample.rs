@@ -1,9 +1,10 @@
 //! Counterexample: the **naive** integer cosine that `isqrt`s `G_ii` outside
 //! the PPM scaling **does not** preserve diagonal exactness.
 //!
-//! This is the negative half of Theorem A: it shows why scaling the PPM
-//! factor *inside* the `isqrt` (as [`bitrag_int_diag::norm_ppm`] does) is
-//! essential, and not a notational convenience.
+//! This is the negative half of the diagonal-exact identity: it shows
+//! why scaling the PPM factor *inside* the `isqrt` (as
+//! [`bitrag_int_diag::norm_ppm`] does) is essential, and not a notational
+//! convenience.
 
 use bitrag_int_diag::{diagonal_unitize, naive_diagonal_unitize, PPM};
 
@@ -30,13 +31,13 @@ fn naive_breaks_diagonal_on_non_square_g_ii() {
         "naive method should lose diagonal exactness on non-square G_ii (got errors {diag_errors:?})"
     );
 
-    // Theorem-A method: diagonal must be exactly PPM for the same input.
+    // Inside-isqrt method: diagonal must be exactly PPM for the same input.
     let (_, c_exact) = diagonal_unitize(&g);
     for (i, row) in c_exact.iter().enumerate() {
         let v = row[i];
         assert_eq!(
             v, PPM,
-            "Theorem A method must give exact PPM at C[{i}][{i}], got {v}"
+            "inside-isqrt method must give exact PPM at C[{i}][{i}], got {v}"
         );
     }
 }

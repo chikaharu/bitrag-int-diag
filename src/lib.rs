@@ -1,10 +1,16 @@
 //! # bitrag-int-diag
 //!
-//! **Integer-exact diagonal unitization of Gram-like matrices**, achieving
-//! **0 ppm error on the diagonal** using only `u128` integer arithmetic and
-//! Newton–Raphson integer square root.
+//! **Integer-only fixed-point cosine normalization for Gram-like matrices**,
+//! with **bit-exact diagonal** (`C_ii == 1.000000` to 0 ppm) using only
+//! `u128` arithmetic and Newton–Raphson integer square root.
 //!
-//! ## Theorem A (Integer IDF² Diagonal Unitization)
+//! This crate is the **numerical-reproducibility appendix** for the
+//! [bitRAG main theorem (MAIN-B)](https://github.com/chikaharu/bitrag-theorems).
+//! It is not a research lemma — it is a well-known fixed-point trick
+//! (scale **inside** the integer square root) packaged so the numeric
+//! results of MAIN-B reproduce byte-for-byte on every 64-bit machine.
+//!
+//! ## Diagonal-exact identity
 //!
 //! Let `G ∈ ℕ^{n×n}` be a Gram-like integer matrix with `G_ii > 0`
 //! for every `i`. Let `P = 10^6` ([`PPM`]). Define
@@ -18,24 +24,23 @@
 //!
 //! ## Origin
 //!
-//! Extracted and formalized from
+//! Extracted from
 //! [chikaharu/bitRAG](https://github.com/chikaharu/bitRAG) experiment E145
 //! ("XCORR重みIDF² 厳密対角単位化, 整数 cosine, 誤差 0 ppm").
 //!
 //! ## Counterexample
 //!
-//! A naive integer divison
+//! The naive integer division
 //!
 //! ```text
 //! C'_ij = G_ij · P / (isqrt(G_ii) · isqrt(G_jj))
 //! ```
 //!
 //! does **not** preserve diagonal exactness when `G_ii` is not a perfect
-//! square. The key trick of Theorem A is to absorb the PPM scaling
+//! square. The whole point of this crate is to absorb the PPM scaling
 //! **inside** the `isqrt` so that `norm_i² ≤ G_ii · P²`, which makes
-//! `G_ii · P³ / norm_i² ≥ P` and the floored result lands on `P` exactly
-//! whenever `norm_i² ≥ G_ii · P² · (P-1)/P`. See [`naive_diagonal_unitize`]
-//! for the broken version, used in tests.
+//! `G_ii · P³ / norm_i² ≥ P` and the floored result lands on `P` exactly.
+//! See [`naive_diagonal_unitize`] for the broken version, used in tests.
 //!
 //! ## Public API
 //!
@@ -113,8 +118,8 @@ pub fn cosine_ppm(g_ij: u64, norm_i: u128, norm_j: u128) -> u64 {
 /// - `norms[i] = isqrt(G[i][i] · P²)`
 /// - `C[i][j] = floor(G[i][j] · P³ / (norms[i] · norms[j]))`
 ///
-/// **Guarantee** (Theorem A): `C[i][i] == PPM` exactly for every `i` with
-/// `G[i][i] > 0`, with zero ppm error.
+/// **Guarantee** (diagonal-exact identity): `C[i][i] == PPM` exactly for
+/// every `i` with `G[i][i] > 0`, with zero ppm error.
 ///
 /// # Panics
 ///

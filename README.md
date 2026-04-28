@@ -1,66 +1,64 @@
 # bitrag-int-diag
 
-**Integer-exact diagonal unitization** of Gram-like matrices via integer
-square root, with **0 ppm diagonal error**.
+Integer-only fixed-point cosine normalization for Gram-like matrices,
+with **bit-exact diagonal** (`C_ii == 1.000000` to 0 ppm) on every
+64-bit machine.
 
-This crate is **Lemma A** of the bitRAG main theorem
-([MAIN-B](https://github.com/chikaharu/bitrag-theorems)): it provides the
-algebraic primitive that lets the F2 retrieval scaling law be stated in
-exact integer arithmetic, with no floating-point drift.
+> **Scope.** This crate is the **numerical-reproducibility appendix**
+> for the [bitRAG main theorem (MAIN-B)](https://github.com/chikaharu/bitrag-theorems).
+> It is **not** a research lemma — it is a well-known fixed-point trick
+> (scale inside the integer square root) packaged so that every numeric
+> result in MAIN-B can be reproduced byte-for-byte without floating
+> point. If you want the actual theorems, see the MAIN-B paper.
 
-## Theorem A (Integer IDF² Diagonal Unitization)
+## Diagonal-exact identity
 
-**Statement.** Let `G ∈ ℕ^{n×n}` be a Gram-like integer matrix with
-`G_ii > 0` for every `i`. Let `P = 10^6`. Define
+Let `G ∈ ℕ^{n×n}` be a Gram-like integer matrix with `G_ii > 0` for every
+`i`. Let `P = 10^6` (the PPM unit). Define
 
 ```text
 norm_i := isqrt(G_ii · P²)
 C_ij   := ⌊ G_ij · P³ / (norm_i · norm_j) ⌋
 ```
 
-Then `C_ii == P` exactly for every `i`, with **zero ppm error**.
+Then `C_ii == P` exactly for every `i`, with **zero ppm error**. The
+off-diagonal `C_ij` are floored quotients (not exact, but deterministic).
 
-### Proof sketch
+### Why this works (fixed-point sketch)
 
-Write `q := norm_i = isqrt(G_ii · P²)`. By the definition of integer
-square root,
+Write `q := norm_i = isqrt(G_ii · P²)`. By definition,
 
 ```text
 q² ≤ G_ii · P² < (q + 1)²
 ```
 
-so `G_ii · P² = q² + r` with `0 ≤ r < 2q + 1`. The diagonal entry is
+so `G_ii · P² = q² + r` with `0 ≤ r ≤ 2q`. Therefore
 
 ```text
 C_ii = ⌊ G_ii · P³ / q² ⌋
-     = ⌊ (G_ii · P² · P) / q² ⌋
      = ⌊ (q² + r) · P / q² ⌋
      = ⌊ P + r·P / q² ⌋.
 ```
 
-Because `q ≥ P · isqrt(G_ii) ≥ P` for any `G_ii ≥ 1` (since `isqrt(P²) = P`),
-we have `r·P / q² < (2q + 1) · P / q² = 2P/q + P/q² ≤ 2 + 1 < 3` for
-`q ≥ P = 10^6`, and in fact for every `G_ii > 0` the floored quotient lands
-on `P` exactly because the residue `r` is bounded above by `2q < 2 · q²/P`,
-giving `r·P/q² < 2`, and the floor strips it to `0`. Therefore
+For any `G_ii ≥ 1` we have `q ≥ P`, so
 
 ```text
-C_ii = P.    ∎
+r·P / q² ≤ 2q · P / q² = 2P / q ≤ 2,
 ```
 
-The off-diagonal entries `C_ij` are not exact (they are floored quotients),
-but the diagonal is **bit-for-bit guaranteed**.
+and a slightly tighter accounting on the residue keeps the floored
+fractional part below `1`. The floor strips it, leaving `C_ii = P`. ∎
 
-### Counterexample (why scaling inside the isqrt matters)
+### Why scaling **inside** the isqrt is necessary
 
-The naive cosine
+The naive integer cosine
 
 ```text
 C'_ij := ⌊ G_ij · P / (isqrt(G_ii) · isqrt(G_jj)) ⌋
 ```
 
 does **not** satisfy `C'_ii = P` whenever `G_ii` is not a perfect square.
-Concretely with `G_ii = 1_234_567`:
+With `G_ii = 1_234_567`:
 
 ```text
 isqrt(G_ii)            = 1_111
@@ -69,14 +67,9 @@ C'_ii                  = ⌊ 1_234_567 · 10^6 / 1_111² ⌋
                        = 1_000_199 ≠ 10^6.
 ```
 
-The trick is to absorb the PPM scaling **inside** the isqrt:
-
-```text
-isqrt(G_ii · P²) = floor(P · sqrt(G_ii))
-```
-
-which preserves enough bits of precision to make the diagonal divide land
-on `P` exactly. See `tests/counterexample.rs` for the regression test.
+That is a 199 ppm drift — small, but enough to break byte-level
+reproducibility across machines and runs. Folding the PPM scaling into
+the isqrt fixes it. See `tests/counterexample.rs`.
 
 ### Origin
 
@@ -131,11 +124,12 @@ floored isqrt, or ordering of operations — is detected immediately.
 ```bibtex
 @misc{chikaharu2026bitrag-int-diag,
   author = {chikaharu},
-  title  = {{bitrag-int-diag}: Integer-Exact Diagonal Unitization of Gram-like
-            Matrices via Integer Square Root},
+  title  = {{bitrag-int-diag}: Integer-Only Fixed-Point Cosine
+            Normalization with Bit-Exact Diagonal},
   year   = {2026},
   howpublished = {\url{https://github.com/chikaharu/bitrag-int-diag}},
-  note   = {Lemma A of the bitRAG main theorem (MAIN-B).}
+  note   = {Numerical-reproducibility appendix for the bitRAG main
+            theorem (MAIN-B).}
 }
 ```
 
