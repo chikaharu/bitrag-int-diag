@@ -163,7 +163,7 @@ pub fn idf_squared_weights(num_docs: u32, df: &[u32]) -> Vec<u64> {
 /// `C'_ij = floor(G_ij · P / (isqrt(G_ii) · isqrt(G_jj)))`
 ///
 /// This produces the **wrong** diagonal whenever `G_ii` is not a perfect
-/// square. Used in [`tests/counterexample.rs`] to demonstrate why the
+/// square. Used in `tests/counterexample.rs` to demonstrate why the
 /// in-isqrt scaling of [`diagonal_unitize`] is essential.
 pub fn naive_diagonal_unitize(g: &[Vec<u64>]) -> Vec<Vec<u64>> {
     let n = g.len();
