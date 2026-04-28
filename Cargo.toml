@@ -1,0 +1,20 @@
+[package]
+name = "bitrag-int-diag"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+license = "Apache-2.0"
+description = "Integer-exact diagonal unitization of Gram-like matrices via integer square root, with 0 ppm diagonal error. Lemma A of the bitRAG main theorem."
+repository = "https://github.com/chikaharu/bitrag-int-diag"
+homepage = "https://github.com/chikaharu/bitrag-int-diag"
+readme = "README.md"
+keywords = ["gram-matrix", "integer", "isqrt", "ir", "bitrag"]
+categories = ["mathematics", "no-std", "science"]
+
+[lib]
+name = "bitrag_int_diag"
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
